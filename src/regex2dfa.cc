@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <fstream>
 #include <iostream>
 
@@ -89,16 +92,33 @@ bool AttFstMinimize(std::string & fst_path, std::string & str_dfa, std::string *
   return true;
 }
 
-int
-main (int argc, char **argv) {
+int main (int argc, char **argv) {
+  extern char *optarg;
+  char *regex;
+  int c;
+  bool regex_set = false;
+  std::string usage = "usage: %s -r REGEX\n";
+
+  while ((c = getopt(argc, argv, "r:")) != -1)
+    switch (c) {
+    case 'r':
+      regex = optarg;
+      regex_set = true;
+      break;
+    }
+
+  if (!regex_set) {
+    std::cerr << usage << std::endl;
+    exit(1);
+  }
+
+  std::string input_regex = std::string(regex);
   std::string fst_path = "third_party/openfst/src/bin";
-
   std::string dfa;
-  AttFstFromRegex("^(a|b)$", &dfa);
-
   std::string minimized_dfa;
+
+  AttFstFromRegex(input_regex, &dfa);
   AttFstMinimize(fst_path, dfa, &minimized_dfa);
 
   std::cout << minimized_dfa << std::endl;
 }
-
