@@ -92,6 +92,17 @@ bool AttFstMinimize(std::string & fst_path, std::string & str_dfa, std::string *
   return true;
 }
 
+std::string get_selfpath() {
+    char buff[1024];
+    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
+    if (len != -1) {
+      buff[len] = '\0';
+      return std::string(buff);
+    } else {
+      return "";
+    }
+}
+
 int main (int argc, char **argv) {
   extern char *optarg;
   char *regex;
@@ -112,8 +123,10 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
+  std::string fst_path_bin = get_selfpath();
+  std::string fst_path = string(fst_path_bin, 0, fst_path_bin.length() - 10);
+  std::cout << fst_path << std::endl;
   std::string input_regex = std::string(regex);
-  std::string fst_path = "third_party/openfst/src/bin";
   std::string dfa;
   std::string minimized_dfa;
 
