@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include <fstream>
-#include <iostream>
 
 #include "re2/re2.h"
 #include "re2/regexp.h"
@@ -125,7 +124,6 @@ int main (int argc, char **argv) {
 
   std::string fst_path_bin = get_selfpath();
   std::string fst_path = string(fst_path_bin, 0, fst_path_bin.length() - 10);
-  std::cout << fst_path << std::endl;
   std::string input_regex = std::string(regex);
   std::string dfa;
   std::string minimized_dfa;
