@@ -42,7 +42,7 @@ bool AttFstFromRegex(const std::string & regex, std::string * dfa) {
   return true;
 }
 
-bool AttFstMinimize(std::string & fst_path, std::string & str_dfa, std::string * minimized_dfa) {
+bool AttFstMinimize( std::string & str_dfa, std::string * minimized_dfa) {
   const char* temp_dir = getenv("TMPDIR");
   if (temp_dir == 0) {
     temp_dir = "/tmp";
@@ -64,15 +64,15 @@ bool AttFstMinimize(std::string & fst_path, std::string & str_dfa, std::string *
   std::string cmd;
 
   // convert our ATT DFA string to an FST
-  cmd = fst_path + "/fstcompile " + abspath_dfa + " " + abspath_fst;
+  cmd = "fstcompile " + abspath_dfa + " " + abspath_fst;
   system(cmd.c_str());
 
   // convert our FST to a minmized FST
-  cmd = fst_path + "/fstminimize " + abspath_fst + " " + abspath_fst_min;
+  cmd = "fstminimize " + abspath_fst + " " + abspath_fst_min;
   system(cmd.c_str());
 
   // covert our minimized FST to an ATT FST string
-  cmd = fst_path + "/fstprint " + abspath_fst_min + " " + abspath_dfa_min;
+  cmd = "fstprint " + abspath_fst_min + " " + abspath_dfa_min;
   system(cmd.c_str());
 
   // read the contents of of the file at abspath_dfa_min to our retval
@@ -90,17 +90,6 @@ bool AttFstMinimize(std::string & fst_path, std::string & str_dfa, std::string *
   remove( abspath_dfa_min.c_str() );
 
   return true;
-}
-
-std::string get_selfpath() {
-    char buff[1024];
-    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
-    if (len != -1) {
-      buff[len] = '\0';
-      return std::string(buff);
-    } else {
-      return "";
-    }
 }
 
 int main (int argc, char **argv) {
@@ -123,15 +112,12 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
-  std::string fst_path_bin = get_selfpath();
-  std::string fst_path = string(fst_path_bin, 0, fst_path_bin.length() - 10);
-  std::cout << fst_path << std::endl;
   std::string input_regex = std::string(regex);
   std::string dfa;
   std::string minimized_dfa;
 
   AttFstFromRegex(input_regex, &dfa);
-  AttFstMinimize(fst_path, dfa, &minimized_dfa);
+  AttFstMinimize(dfa, &minimized_dfa);
 
   std::cout << minimized_dfa << std::endl;
 }
