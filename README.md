@@ -6,6 +6,8 @@ This is a command-line utility that converts a regular expression to a DFA.
 * **input**: A perl-compatible regular expression, as defined by re2 [1].
 * **output**: An AT&T FST [2], which accepts an equivelent language to the input regular expression.
 
+### References
+
 * [1] https://code.google.com/p/re2/
 * [2] https://openfst.org/
 
