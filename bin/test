@@ -1,0 +1,35 @@
+#!/usr/bin/env python2
+
+import os
+import glob
+import commands
+
+def dfasAreEqual(dfa1, dfa2):
+    return (dfa1.strip() == dfa2.strip())
+
+def doTest(bin_dir, regex_file):
+    with open(regex_file) as fh:
+        regex = fh.read()
+
+    dfa_file = regex_file[:-5]+'dfa'
+
+    with open(dfa_file) as fh:
+        expected_dfa = fh.read()
+
+    cmd = "PATH="+bin_dir+" regex2dfa -r \""+regex+"\""
+    actual_dfa = commands.getstatusoutput(cmd)[1]
+
+    if dfasAreEqual(actual_dfa, expected_dfa):
+        print regex_file, "SUCCESS"
+    else:
+        print regex_file, "*** FAIL"
+    
+
+bin_dir = os.path.abspath(os.path.dirname(__file__))
+test_dir = os.path.join(bin_dir, '..', 'tests')
+test_files_mask = os.path.join(test_dir, '*.regex')
+test_files_mask = os.path.realpath(test_files_mask)
+
+test_files = glob.glob(test_files_mask)
+for test_file in test_files:
+    doTest(bin_dir, test_file)

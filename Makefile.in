@@ -16,6 +16,7 @@ OBJ_REGEX2DFA = src/regex2dfa.o
 TARGET_REGEX2DFA = bin/regex2dfa
 TARGET_LIBRE2 = $(RE2_LIB_DIR)/libre2.a
 TARGET_FSTBIN = bin/fstcompile
+TARGET_TEST = bin/test
 
 $(TARGET_REGEX2DFA): $(TARGET_LIBRE2) $(TARGET_FSTBIN) $(OBJ_REGEX2DFA)
 	$(CXX) $(CXXFLAGS_) $(OBJ_REGEX2DFA) -o $@ $(LDFLAGS_)
@@ -31,6 +32,9 @@ $(TARGET_LIBRE2):
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS_) -c -o $@ $<
+
+test:
+	$(TARGET_TEST)
 
 clean:
 	cd $(FST_DIR) && $(MAKE) clean
