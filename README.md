@@ -1,6 +1,8 @@
 regex2dfa
 =========
 
+[![Build Status](https://travis-ci.org/kpdyer/regex2dfa.svg?branch=master)](https://travis-ci.org/kpdyer/regex2dfa)
+
 This is a command-line utility that converts a regular expression to a DFA.
 
 * **input**: A perl-compatible regular expression, as defined by re2 [1].
