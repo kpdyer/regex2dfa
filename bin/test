@@ -23,6 +23,7 @@ def doTest(bin_dir, regex_file):
         print regex_file, "SUCCESS"
     else:
         print regex_file, "*** FAIL"
+        sys.exit(1)
     
 
 bin_dir = os.path.abspath(os.path.dirname(__file__))
@@ -33,3 +34,5 @@ test_files_mask = os.path.realpath(test_files_mask)
 test_files = glob.glob(test_files_mask)
 for test_file in test_files:
     doTest(bin_dir, test_file)
+
+sys.exit(0)
