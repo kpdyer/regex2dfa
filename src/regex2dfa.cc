@@ -3,10 +3,18 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
+#include <map>
+
+#include "fst/fstlib.h"
+#include "fst/script/fstscript.h"
 
 #include "re2/re2.h"
 #include "re2/regexp.h"
 #include "re2/prog.h"
+
+std::map< std::string, uint32_t > state_map;
+uint32_t state_counter = 0;
 
 bool AttFstFromRegex(const std::string & regex, std::string * dfa) {
   // specify compile flags for re2
@@ -27,10 +35,18 @@ bool AttFstFromRegex(const std::string & regex, std::string * dfa) {
   try {
     RE2::Options opt;
     re2::Regexp* re = re2::Regexp::Parse( regex, re_flags, &status );
+    if (re!=NULL) {
     re2::Prog* prog = re->CompileToProg( opt.max_mem() );
+    if (prog!=NULL) {
     (*dfa) = prog->PrintEntireDFA( re2::Prog::kFullMatch );
+    }
+    }
   } catch (int e) {
-    // do nothing, we return the empty string
+return false;
+  }
+
+  if ((*dfa)=="") {
+return false;
   }
 
   // cleanup
@@ -42,52 +58,119 @@ bool AttFstFromRegex(const std::string & regex, std::string * dfa) {
   return true;
 }
 
-bool AttFstMinimize( std::string & str_dfa, std::string * minimized_dfa) {
-  const char* temp_dir = getenv("TMPDIR");
-  if (temp_dir == 0) {
-    temp_dir = "/tmp";
+std::vector<std::string> tokenize(const std::string & line,
+    const char & delim) {
+  std::vector<std::string> retval;
+
+  std::istringstream iss(line);
+  std::string fragment;
+  while(std::getline(iss, fragment, delim)) {
+    retval.push_back(fragment);
   }
-  std::string temp_dir_str = std::string(temp_dir);
-  std::string temp_file = "000000";
 
-  std::string abspath_dfa     = temp_dir_str+ "/" + temp_file + ".dfa";
-  std::string abspath_fst     = temp_dir_str+ "/" + temp_file + ".fst";
-  std::string abspath_fst_min = temp_dir_str+ "/" + temp_file + ".min.fst";
-  std::string abspath_dfa_min = temp_dir_str+ "/" + temp_file + ".min.dfa";
+  return retval;
+}
 
-  // write our input DFA to disk
-  std::ofstream dfa_stream;
-  dfa_stream.open (abspath_dfa.c_str());
-  dfa_stream << str_dfa;
-  dfa_stream.close();
+bool StateExists(std::string state_label) {
+  return (state_map.find(state_label) != state_map.end());
+}
 
-  std::string cmd;
+uint32_t AddState(std::string state_label) {
+  state_map.insert(std::pair<std::string, uint32_t>(state_label, state_counter++));
+  return state_counter;
+}
 
-  // convert our ATT DFA string to an FST
-  cmd = "fstcompile " + abspath_dfa + " " + abspath_fst;
-  system(cmd.c_str());
+uint32_t StateLookup(std::string state_label) {
+  return state_map.at(state_label);
+}
 
-  // convert our FST to a minmized FST
-  cmd = "fstminimize " + abspath_fst + " " + abspath_fst_min;
-  system(cmd.c_str());
+bool CreateFst(const std::string & str_dfa,
+               fst::script::FstClass * input_fst) {
 
-  // covert our minimized FST to an ATT FST string
-  cmd = "fstprint " + abspath_fst_min + " " + abspath_dfa_min;
-  system(cmd.c_str());
+  fst::StdVectorFst fst;
 
-  // read the contents of of the file at abspath_dfa_min to our retval
-  std::ifstream dfa_min_stream(abspath_dfa_min.c_str());
-  std::stringstream buffer;
-  buffer << dfa_min_stream.rdbuf();
-  dfa_min_stream.close();
+  bool startStateIsntSet = true;
+  std::string line;
+  std::istringstream my_str_stream(str_dfa);
+  while ( getline (my_str_stream,line) ) {
+    if (line.empty()) {
+      break;
+    }
 
-  (*minimized_dfa) = std::string(buffer.str());
+    std::vector<std::string> split_vec = tokenize(line, ' ');
+    if (4 == split_vec.size()) {
+      if(!StateExists(split_vec.at(0))) {
+        fst.AddState();
+        AddState(split_vec.at(0));
+      }
+      if(!StateExists(split_vec.at(1))) {
+        fst.AddState();
+        AddState(split_vec.at(1));
+      }
+      fst.AddArc(StateLookup(split_vec.at(0)),
+                 fst::StdArc(atoi(split_vec.at(2).c_str()),
+                             atoi(split_vec.at(3).c_str()),
+                             0,
+                             StateLookup(split_vec.at(1))));
+    } else if (1 == split_vec.size()) {
+      if(!StateExists(split_vec.at(0))) {
+        fst.AddState();
+      }
+      uint32_t final_state = StateLookup(split_vec.at(0));
+      fst.SetFinal(final_state, 0);
+    }
+  }
 
-  // cleanup
-  remove( abspath_dfa.c_str() );
-  remove( abspath_fst.c_str() );
-  remove( abspath_fst_min.c_str() );
-  remove( abspath_dfa_min.c_str() );
+  fst.SetStart(0);
+
+  *input_fst = static_cast<fst::script::FstClass>(fst);
+
+  return true;
+}
+
+bool FormatFst(const std::string & str_dfa,
+               std::string * formatted_dfa) {
+
+  std::string & retval = (*formatted_dfa);
+
+  std::string line;
+  std::istringstream my_str_stream(str_dfa);
+  while ( getline (my_str_stream,line) ) {
+    if (line.empty()) {
+      break;
+    }
+
+    std::vector<std::string> split_vec = tokenize(line, '\t');
+    if (4 == split_vec.size()) {
+      retval += split_vec.at(0);
+      retval += "\t" + split_vec.at(1);
+      retval += "\t" + split_vec.at(2);
+      retval += "\t" + split_vec.at(2);
+      retval += "\n";
+    } else if (2 == split_vec.size()) {
+      retval += split_vec.at(0);
+      retval += "\n";
+    }
+  }
+
+  return true;
+}
+
+bool AttFstMinimize(const std::string & str_dfa,
+                    std::string * minimized_dfa) {
+
+  fst::script::FstClass * fst = new fst::script::FstClass();
+
+  CreateFst(str_dfa, fst);
+
+  fst::script::MutableFstClass * mutable_fst
+    = static_cast<fst::script::MutableFstClass*>(fst);
+  fst::script::Minimize(mutable_fst);
+
+  std::ostringstream ostrm;
+  fst::script::PrintFst(*fst, ostrm, "", NULL, NULL, NULL, true, true);
+
+  FormatFst(ostrm.str(), minimized_dfa);
 
   return true;
 }
@@ -116,8 +199,14 @@ int main (int argc, char **argv) {
   std::string dfa;
   std::string minimized_dfa;
 
-  AttFstFromRegex(input_regex, &dfa);
-  AttFstMinimize(dfa, &minimized_dfa);
+  bool compile_success = AttFstFromRegex(input_regex, &dfa);
+
+  if (compile_success) {
+  bool minimize_success = AttFstMinimize(dfa, &minimized_dfa);
+  } else {
+    std::cerr << "\033[1;31mERROR\033[0m";
+    std::cerr << ": Failed to compile regex: \"" + input_regex + "\"";
+  }
 
   std::cout << minimized_dfa << std::endl;
 }

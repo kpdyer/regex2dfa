@@ -20,7 +20,7 @@
 #define DCHECK_GT(val1, val2) assert((val1) > (val2))
 
 // Always-on checking
-#define CHECK(x)	if(x){}else LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x
+#define CHECK(x)	if(x){}else RE2LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x
 #define CHECK_LT(x, y)	CHECK((x) < (y))
 #define CHECK_GT(x, y)	CHECK((x) > (y))
 #define CHECK_LE(x, y)	CHECK((x) <= (y))
@@ -28,10 +28,10 @@
 #define CHECK_EQ(x, y)	CHECK((x) == (y))
 #define CHECK_NE(x, y)	CHECK((x) != (y))
 
-#define LOG_INFO LogMessage(__FILE__, __LINE__)
+#define LOG_INFO RE2LogMessage(__FILE__, __LINE__)
 #define LOG_ERROR LOG_INFO
 #define LOG_WARNING LOG_INFO
-#define LOG_FATAL LogMessageFatal(__FILE__, __LINE__)
+#define LOG_FATAL RE2LogMessageFatal(__FILE__, __LINE__)
 #define LOG_QFATAL LOG_FATAL
 
 #define VLOG(x) if((x)>0){}else LOG_INFO.stream()
@@ -46,9 +46,9 @@
 
 #define LOG(severity) LOG_ ## severity.stream()
 
-class LogMessage {
+class RE2LogMessage {
  public:
-  LogMessage(const char* file, int line) : flushed_(false) {
+  RE2LogMessage(const char* file, int line) : flushed_(false) {
     stream() << file << ":" << line << ": ";
   }
   void Flush() {
@@ -58,7 +58,7 @@ class LogMessage {
     if(write(2, s.data(), n) < 0) {}  // shut up gcc
     flushed_ = true;
   }
-  ~LogMessage() {
+  ~RE2LogMessage() {
     if (!flushed_) {
       Flush();
     }
@@ -68,19 +68,19 @@ class LogMessage {
  private:
   bool flushed_;
   std::ostringstream str_;
-  DISALLOW_EVIL_CONSTRUCTORS(LogMessage);
+  DISALLOW_EVIL_CONSTRUCTORS(RE2LogMessage);
 };
 
-class LogMessageFatal : public LogMessage {
+class RE2LogMessageFatal : public RE2LogMessage {
  public:
-  LogMessageFatal(const char* file, int line)
-    : LogMessage(file, line) { }
-  ~LogMessageFatal() {
+  RE2LogMessageFatal(const char* file, int line)
+    : RE2LogMessage(file, line) { }
+  ~RE2LogMessageFatal() {
     Flush();
     abort();
   }
  private:
-  DISALLOW_EVIL_CONSTRUCTORS(LogMessageFatal);
+  DISALLOW_EVIL_CONSTRUCTORS(RE2LogMessageFatal);
 };
 
 #endif  // RE2_UTIL_LOGGING_H__

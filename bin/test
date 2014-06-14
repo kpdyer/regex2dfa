@@ -17,7 +17,8 @@ def doTest(bin_dir, regex_file):
     with open(dfa_file) as fh:
         expected_dfa = fh.read()
 
-    cmd = "PATH="+bin_dir+" regex2dfa -r \""+regex+"\""
+    regex2dfa_binary = os.path.join(bin_dir, 'regex2dfa')
+    cmd = regex2dfa_binary + " -r \""+regex+"\""
     actual_dfa = commands.getstatusoutput(cmd)[1]
 
     if dfasAreEqual(actual_dfa, expected_dfa):
@@ -37,3 +38,6 @@ def main():
         doTest(bin_dir, test_file)
 
     sys.exit(0)
+
+if __name__ == "__main__":
+    main()

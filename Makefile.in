@@ -1,34 +1,40 @@
 THIRDPARTY_DIR = third_party
 
 FST_DIR = $(THIRDPARTY_DIR)/openfst
-FST_BIN_DIR = $(FST_DIR)/src/bin
+FST_INC_DIR = $(FST_DIR)/src/include
+FST_LIB_DIR = $(FST_DIR)/src/lib/.libs
+FSTSCRIPT_LIB_DIR = $(FST_DIR)/src/script/.libs
 
 RE2_DIR = $(THIRDPARTY_DIR)/re2
 RE2_LIB_DIR = $(RE2_DIR)/obj
 RE2_INC_DIR = $(RE2_DIR)
 
 OPTIMIZATION_FLAGS = -O3
-CXXFLAGS_  = $(CXXFLAGS) $(OPTIMIZATION_FLAGS) -Wall -I. -Isrc -I$(THIRDPARTY_DIR) -I$(RE2_INC_DIR)
-LDFLAGS_ = $(LDFLAGS) $(OPTIMIZATION_FLAGS) -L$(RE2_LIB_DIR) -pthread -lre2
+CXXFLAGS_  = $(CXXFLAGS) $(OPTIMIZATION_FLAGS) -Wall -I. -Isrc -I$(THIRDPARTY_DIR) -I$(RE2_INC_DIR) -I$(FST_INC_DIR)
+LDFLAGS_ = $(LDFLAGS) $(OPTIMIZATION_FLAGS) -L$(RE2_LIB_DIR) -L$(FST_LIB_DIR) -L$(FSTSCRIPT_LIB_DIR) -pthread -lre2 -lfst -lfstscript
 
 OBJ_REGEX2DFA = src/regex2dfa.o
 
 TARGET_REGEX2DFA = bin/regex2dfa
 TARGET_LIBRE2 = $(RE2_LIB_DIR)/libre2.a
-TARGET_FSTBIN = bin/fstcompile
+TARGET_FSTBIN = $(FST_DIR)/src/lib/.libs/libfst.a
 TARGET_TEST = bin/test
 
-$(TARGET_REGEX2DFA): $(TARGET_LIBRE2) $(TARGET_FSTBIN) $(OBJ_REGEX2DFA)
+$(TARGET_REGEX2DFA): $(OBJ_REGEX2DFA)
 	$(CXX) $(CXXFLAGS_) $(OBJ_REGEX2DFA) -o $@ $(LDFLAGS_)
 
-$(TARGET_FSTBIN):
-	cd $(FST_DIR) && $(MAKE)
-	cp -fv $(FST_BIN_DIR)/fstcompile bin/
-	cp -fv $(FST_BIN_DIR)/fstminimize bin/
-	cp -fv $(FST_BIN_DIR)/fstprint bin/
+$(OBJ_REGEX2DFA): $(TARGET_LIBRE2) $(TARGET_FSTBIN)
 
-$(TARGET_LIBRE2):
+$(TARGET_FSTBIN):
+	cd $(FST_DIR) && ./configure --enable-bin --disable-shared --enable-static && $(MAKE)
+
+$(TARGET_LIBRE2): $(RE2_DIR)/util/logging.h.fixed
 	cd $(RE2_DIR) && $(MAKE) obj/libre2.a
+
+$(RE2_DIR)/util/logging.h.fixed:
+	sed 's/LogMessage/RE2LogMessage/g' $(RE2_DIR)/util/logging.h > $(RE2_DIR)/util/logging.h.tmp
+	mv $(RE2_DIR)/util/logging.h.tmp $(RE2_DIR)/util/logging.h
+	touch $(RE2_DIR)/util/logging.h.fixed
 
 %.o: %.cc
 	$(CXX) $(CXXFLAGS_) -c -o $@ $<
