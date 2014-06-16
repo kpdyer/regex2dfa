@@ -36,17 +36,17 @@ bool AttFstFromRegex(const std::string & regex, std::string * dfa) {
     RE2::Options opt;
     re2::Regexp* re = re2::Regexp::Parse( regex, re_flags, &status );
     if (re!=NULL) {
-    re2::Prog* prog = re->CompileToProg( opt.max_mem() );
-    if (prog!=NULL) {
-    (*dfa) = prog->PrintEntireDFA( re2::Prog::kFullMatch );
-    }
+      re2::Prog* prog = re->CompileToProg( opt.max_mem() );
+      if (prog!=NULL) {
+        (*dfa) = prog->PrintEntireDFA( re2::Prog::kFullMatch );
+      }
     }
   } catch (int e) {
-return false;
+    return false;
   }
 
   if ((*dfa)=="") {
-return false;
+    return false;
   }
 
   // cleanup
@@ -59,7 +59,7 @@ return false;
 }
 
 std::vector<std::string> tokenize(const std::string & line,
-    const char & delim) {
+                                  const char & delim) {
   std::vector<std::string> retval;
 
   std::istringstream iss(line);
@@ -202,11 +202,14 @@ int main (int argc, char **argv) {
   bool compile_success = AttFstFromRegex(input_regex, &dfa);
 
   if (compile_success) {
-  bool minimize_success = AttFstMinimize(dfa, &minimized_dfa);
+    bool minimize_success = AttFstMinimize(dfa, &minimized_dfa);
   } else {
     std::cerr << "\033[1;31mERROR\033[0m";
     std::cerr << ": Failed to compile regex: \"" + input_regex + "\"";
+    std::cerr << std::endl;
+    return 1;
   }
 
   std::cout << minimized_dfa << std::endl;
+  return 0;
 }
