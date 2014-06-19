@@ -11,9 +11,9 @@ RE2_INC_DIR = $(RE2_DIR)
 
 OPTIMIZATION_FLAGS = -O3
 CXXFLAGS_  = $(CXXFLAGS) $(OPTIMIZATION_FLAGS) -std=c++0x -DUSE_CXX0X -Wall -I. -Isrc -I$(THIRDPARTY_DIR) -I$(RE2_INC_DIR) -I$(FST_INC_DIR)
-LDFLAGS_ = $(LDFLAGS) $(OPTIMIZATION_FLAGS) -L$(RE2_LIB_DIR) -L$(FST_LIB_DIR) -L$(FSTSCRIPT_LIB_DIR) -pthread -lre2 -lfst -lfstscript -ldl
+LDFLAGS_ = $(LDFLAGS) $(OPTIMIZATION_FLAGS) -L$(RE2_LIB_DIR) -L$(FST_LIB_DIR) -L$(FSTSCRIPT_LIB_DIR) -lre2 -lfst -lfstscript -ldl
 
-OBJ_REGEX2DFA = src/regex2dfa.o
+OBJ_REGEX2DFA = src/regex2dfa.o src/main.o
 
 TARGET_REGEX2DFA = bin/regex2dfa
 TARGET_LIBRE2 = $(RE2_LIB_DIR)/libre2.a
@@ -46,3 +46,4 @@ clean:
 	cd $(FST_DIR) && $(MAKE) clean
 	cd $(RE2_DIR) && $(MAKE) clean
 	rm -f $(TARGET_REGEX2DFA)
+	rm -vf */*.o
