@@ -24,7 +24,7 @@ Once you have your developement environment setup:
 $ ./configure
 $ make
 $ ls bin/
-fstcompile	fstminimize	fstprint	regex2dfa
+regex2dfa
 ```
 
 Example Usage

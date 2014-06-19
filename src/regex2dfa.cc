@@ -1,17 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <iostream>
-#include <fstream>
-#include <cstdlib>
-#include <map>
-
 #include "fst/fstlib.h"
 #include "fst/script/fstscript.h"
 
 #include "re2/re2.h"
 #include "re2/regexp.h"
 #include "re2/prog.h"
+
+#include "regex2dfa.h"
+
+namespace regex2dfa {
 
 std::map< std::string, uint32_t > state_map;
 uint32_t state_counter = 0;
@@ -175,41 +171,16 @@ bool AttFstMinimize(const std::string & str_dfa,
   return true;
 }
 
-int main (int argc, char **argv) {
-  extern char *optarg;
-  char *regex;
-  int c;
-  bool regex_set = false;
-  std::string usage = "usage: %s -r REGEX\n";
-
-  while ((c = getopt(argc, argv, "r:")) != -1)
-    switch (c) {
-    case 'r':
-      regex = optarg;
-      regex_set = true;
-      break;
-    }
-
-  if (!regex_set) {
-    std::cerr << usage << std::endl;
-    exit(1);
-  }
-
-  std::string input_regex = std::string(regex);
+bool Regex2Dfa(const std::string & regex,
+               std::string * minimized_dfa) {
+  bool success = false;
   std::string dfa;
-  std::string minimized_dfa;
-
-  bool compile_success = AttFstFromRegex(input_regex, &dfa);
-
+  bool compile_success = AttFstFromRegex(regex, &dfa);
   if (compile_success) {
-    bool minimize_success = AttFstMinimize(dfa, &minimized_dfa);
-  } else {
-    std::cerr << "\033[1;31mERROR\033[0m";
-    std::cerr << ": Failed to compile regex: \"" + input_regex + "\"";
-    std::cerr << std::endl;
-    return 1;
+    bool minimize_success = AttFstMinimize(dfa, minimized_dfa);
+    success = true;
   }
-
-  std::cout << minimized_dfa << std::endl;
-  return 0;
+  return success;
 }
+
+} // namespace regex2dfa
