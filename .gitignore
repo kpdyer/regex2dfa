@@ -1,0 +1,13 @@
+third_party/openfst
+third_party/re2
+Makefile
+autom4te.cache/
+bin/fstcompile
+bin/fstminimize
+bin/fstprint
+bin/regex2dfa
+config.log
+config.status
+contrib/
+*.o
+*/*.o
