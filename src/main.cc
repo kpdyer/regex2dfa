@@ -1,11 +1,8 @@
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <iostream>
-#include <fstream>
-#include <cstdlib>
-#include <map>
-#include <getopt.h>
 
 #include "regex2dfa.h"
 

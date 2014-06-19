@@ -5,6 +5,8 @@
 #include "re2/regexp.h"
 #include "re2/prog.h"
 
+#include "regex2dfa.h"
+
 namespace regex2dfa {
 
 std::map< std::string, uint32_t > state_map;
