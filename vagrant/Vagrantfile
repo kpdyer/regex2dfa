@@ -1,0 +1,17 @@
+Vagrant.configure("2") do |config|
+  # machine specs
+  config.vm.box = "ubuntu-14.04-i386"
+
+  # startup script
+  config.vm.provision :shell, :privileged => false, :path => "bootstrap.sh"
+
+  # autoupdate conf.
+  config.vbguest.auto_update = true
+  config.vbguest.auto_reboot = true
+
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--memory", "8192"]
+    vb.customize ["modifyvm", :id, "--cpus", "4"]
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+  end  
+end
