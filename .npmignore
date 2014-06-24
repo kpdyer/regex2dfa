@@ -1,0 +1,12 @@
+config.log
+config.status
+configure
+configure.ac
+Makefile.in
+bin/*
+contrib/*
+html/*
+src/*
+tests/*
+third_party/*
+vagrant/*
