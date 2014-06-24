@@ -184,3 +184,27 @@ bool Regex2Dfa(const std::string & regex,
 }
 
 } // namespace regex2dfa
+
+extern "C"  {
+
+  int _regex2dfa(const uint8_t * input_regex, uint32_t input_regex_len,
+                 uint8_t * output_dfa, uint32_t * output_dfa_len) {
+    uint8_t retval = 0;
+
+    const char * s = reinterpret_cast<const char*>(input_regex);
+    std::string input_regex_str(s, input_regex_len);
+    std::string dfa;
+
+    bool success = regex2dfa::Regex2Dfa(input_regex_str, &dfa);
+    if (success && ((*output_dfa_len) > dfa.size())) {
+      memcpy(output_dfa, dfa.data(), dfa.size());
+      *output_dfa_len = dfa.size();
+    } else {
+      retval = 1;
+    }
+
+    return retval;
+  }
+
+}
+

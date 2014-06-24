@@ -11,3 +11,4 @@ config.status
 contrib/
 *.o
 */*.o
+.libs

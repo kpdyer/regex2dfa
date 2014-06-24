@@ -10,7 +10,7 @@ all: obj/libre2.a obj/so/libre2.so
 # LDPCRE=-L/usr/local/lib -lpcre
 
 CXX?=g++
-CXXFLAGS?=-Wall -fPIC -O3 -g -pthread # can override
+CXXFLAGS?=-Wall -fPIC -O3 -g -DNO_THREADS # can override
 RE2_CXXFLAGS?=-Wno-sign-compare -c -I. $(CCPCRE)  # required
 LDFLAGS?=
 AR?=ar
@@ -256,7 +256,7 @@ install: obj/libre2.a obj/so/libre2.so
 testinstall:
 	@mkdir -p obj
 	cp testinstall.cc obj
-	(cd obj && $(CXX) -I$(DESTDIR)$(includedir) -L$(DESTDIR)$(libdir) testinstall.cc -lre2 -pthread -o testinstall)
+	(cd obj && $(CXX) -I$(DESTDIR)$(includedir) -L$(DESTDIR)$(libdir) testinstall.cc -lre2 -DNO_THREADS -o testinstall)
 	LD_LIBRARY_PATH=$(DESTDIR)$(libdir) obj/testinstall
 
 benchlog: obj/test/regexp_benchmark
