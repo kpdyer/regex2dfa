@@ -9,8 +9,8 @@
 
 namespace regex2dfa {
 
-std::map< std::string, uint32_t > state_map;
-uint32_t state_counter = 0;
+static std::map< std::string, uint32_t > state_map;
+static uint32_t state_counter = 0;
 
 bool AttFstFromRegex(const std::string & regex, std::string * dfa) {
   // specify compile flags for re2
@@ -173,6 +173,9 @@ bool AttFstMinimize(const std::string & str_dfa,
 
 bool Regex2Dfa(const std::string & regex,
                std::string * minimized_dfa) {
+  state_counter = 0;
+  state_map.clear();
+
   bool success = false;
   std::string dfa;
   bool compile_success = AttFstFromRegex(regex, &dfa);
