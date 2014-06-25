@@ -15,7 +15,7 @@ uint32_t state_counter = 0;
 bool AttFstFromRegex(const std::string & regex, std::string * dfa) {
   // specify compile flags for re2
   re2::Regexp::ParseFlags re_flags;
-  re_flags = re2::Regexp::ClassNL;
+  re_flags = re2::Regexp::MatchNL;
   re_flags = re_flags | re2::Regexp::OneLine;
   re_flags = re_flags | re2::Regexp::PerlClasses;
   re_flags = re_flags | re2::Regexp::PerlB;

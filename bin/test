@@ -10,7 +10,7 @@ def dfasAreEqual(dfa1, dfa2):
 
 def doTest(bin_dir, regex_file):
     with open(regex_file) as fh:
-        regex = fh.read()
+        regex = fh.read().strip()
 
     dfa_file = regex_file[:-5]+'dfa'
 
