@@ -4,11 +4,11 @@ LIB_DIR = .libs
 
 FST_DIR = $(THIRDPARTY_DIR)/openfst
 FST_INC_DIR = $(FST_DIR)/src/include
-FST_NPM_DIR = $(FST_DIR)/src/lib/.libs
+FST_LIB_DIR = $(FST_DIR)/src/lib/.libs
 FSTSCRIPT_NPM_DIR = $(FST_DIR)/src/script/.libs
 
 RE2_DIR = $(THIRDPARTY_DIR)/re2
-RE2_NPM_DIR = $(RE2_DIR)/obj
+RE2_LIB_DIR = $(RE2_DIR)/obj
 RE2_INC_DIR = $(RE2_DIR)
 
 ifeq ($(NPMBUILD),1)
@@ -18,7 +18,7 @@ EXPORTS=
 endif
 OPTIMIZATION_FLAGS = -O3
 CXXFLAGS_  = $(CXXFLAGS) $(OPTIMIZATION_FLAGS) -std=c++0x -DNO_THREADS -DUSE_CXX0X -Wall -I. -Isrc -I$(THIRDPARTY_DIR) -I$(RE2_INC_DIR) -I$(FST_INC_DIR) $(EXPORTS)
-LDFLAGS_ = $(LDFLAGS) $(OPTIMIZATION_FLAGS) -L$(RE2_NPM_DIR) -L$(FST_NPM_DIR) -L$(FSTSCRIPT_NPM_DIR) -pthread -lre2 -lfst -lfstscript -ldl
+LDFLAGS_ = $(LDFLAGS) $(OPTIMIZATION_FLAGS) -L$(RE2_LIB_DIR) -L$(FST_LIB_DIR) -L$(FSTSCRIPT_NPM_DIR) -pthread -lre2 -lfst -lfstscript -ldl
 
 OBJ_REGEX2DFA = src/regex2dfa.o src/main.o
 OBJ_LIBREGEX2DFA = src/regex2dfa.o
@@ -28,8 +28,9 @@ TARGET_REGEX2DFA = bin/regex2dfa
 TARGET_LIBREGEX2DFA = $(LIB_DIR)/libregex2dfa.a
 TARGET_LIBREGEX2DFAJS = $(NPM_DIR)/regex2dfa.js
 LIBREGEX2DFAJS_FOOTER = src/regex2dfa_footer.js
-TARGET_LIBRE2 = $(RE2_NPM_DIR)/libre2.a
+TARGET_LIBRE2 = $(RE2_LIB_DIR)/libre2.a
 TARGET_FSTLIB = $(FST_DIR)/src/lib/.libs/libfst.a
+TARGET_FSTSCRIPTLIB = $(FST_DIR)/src/script/.libs/libfstscript.a
 TARGET_TEST = bin/test
 
 all: $(TARGET_REGEX2DFA) $(TARGET_LIBREGEX2DFA)
@@ -46,7 +47,7 @@ $(LIB_DIR):
 	mkdir -p $(LIB_DIR)
 
 $(TARGET_LIBREGEX2DFA): $(LIB_DIR) $(OBJ_LIBREGEX2DFA)
-	$(AR) rsc $(TARGET_LIBREGEX2DFA) $(OBJ_LIBREGEX2DFA)
+	$(AR) rsc $(TARGET_LIBREGEX2DFA) $(OBJ_LIBREGEX2DFA) $(TARGET_FSTLIB)
 
 $(NPM_DIR):
 	mkdir -p $(NPM_DIR)
