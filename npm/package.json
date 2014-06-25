@@ -1,7 +1,7 @@
 {
   "name": "regex2dfa",
   "description": "converts a regular expression to minimal dfa in AT&T FST format",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
