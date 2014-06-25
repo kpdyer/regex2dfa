@@ -1,5 +1,6 @@
 THIRDPARTY_DIR = third_party
 NPM_DIR = npm
+LIB_DIR = .libs
 
 FST_DIR = $(THIRDPARTY_DIR)/openfst
 FST_INC_DIR = $(FST_DIR)/src/include
@@ -20,14 +21,18 @@ CXXFLAGS_  = $(CXXFLAGS) $(OPTIMIZATION_FLAGS) -std=c++0x -DNO_THREADS -DUSE_CXX
 LDFLAGS_ = $(LDFLAGS) $(OPTIMIZATION_FLAGS) -L$(RE2_NPM_DIR) -L$(FST_NPM_DIR) -L$(FSTSCRIPT_NPM_DIR) -pthread -lre2 -lfst -lfstscript -ldl
 
 OBJ_REGEX2DFA = src/regex2dfa.o src/main.o
+OBJ_LIBREGEX2DFA = src/regex2dfa.o
 OBJ_LIBREGEX2DFAJS = src/regex2dfa.o
 
 TARGET_REGEX2DFA = bin/regex2dfa
+TARGET_LIBREGEX2DFA = $(LIB_DIR)/libregex2dfa.a
 TARGET_LIBREGEX2DFAJS = $(NPM_DIR)/regex2dfa.js
 LIBREGEX2DFAJS_FOOTER = src/regex2dfa_footer.js
 TARGET_LIBRE2 = $(RE2_NPM_DIR)/libre2.a
 TARGET_FSTLIB = $(FST_DIR)/src/lib/.libs/libfst.a
 TARGET_TEST = bin/test
+
+all: $(TARGET_REGEX2DFA) $(TARGET_LIBREGEX2DFA)
 
 $(TARGET_REGEX2DFA): $(OBJ_REGEX2DFA)
 	$(CXX) $(CXXFLAGS_) $(OBJ_REGEX2DFA) -o $@ $(LDFLAGS_)
@@ -36,6 +41,12 @@ $(TARGET_LIBREGEX2DFAJS): $(NPM_DIR) $(OBJ_LIBREGEX2DFAJS)
 	$(CXX) $(CXXFLAGS_) $(OBJ_LIBREGEX2DFAJS) -o $@ $(LDFLAGS_)
 	cat $(LIBREGEX2DFAJS_FOOTER) >> $(TARGET_LIBREGEX2DFAJS)
 	sed -i "s/module\[\"exports\"\]=Module/Module['exports']=Module/g" $(TARGET_LIBREGEX2DFAJS)
+
+$(LIB_DIR):
+	mkdir -p $(LIB_DIR)
+
+$(TARGET_LIBREGEX2DFA): $(LIB_DIR) $(OBJ_LIBREGEX2DFA)
+	$(AR) rsc $(TARGET_LIBREGEX2DFA) $(OBJ_LIBREGEX2DFA)
 
 $(NPM_DIR):
 	mkdir -p $(NPM_DIR)
