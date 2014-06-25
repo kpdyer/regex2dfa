@@ -7,4 +7,4 @@ emconfigure ./configure --enable-bin --disable-shared --enable-static
 emmake make
 cd $BUILD_DIR/regex2dfa
 emconfigure ./configure
-emmake make -j$CORES
+emmake make -j$CORES npm/regex2dfa.js
