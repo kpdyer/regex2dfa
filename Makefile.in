@@ -63,4 +63,5 @@ clean:
 	cd $(FST_DIR) && $(MAKE) clean
 	cd $(RE2_DIR) && $(MAKE) clean
 	rm -f $(TARGET_REGEX2DFA)
+	rm -f $(TARGET_LIBREGEX2DFAJS)
 	rm -vf */*.o
