@@ -47,7 +47,19 @@ $(LIB_DIR):
 	mkdir -p $(LIB_DIR)
 
 $(TARGET_LIBREGEX2DFA): $(LIB_DIR) $(OBJ_LIBREGEX2DFA)
-	libtool -o $(TARGET_LIBREGEX2DFA) $(OBJ_LIBREGEX2DFA) $(TARGET_FSTLIB) $(TARGET_FSTSCRIPTLIB) $(TARGET_LIBRE2)
+	# hack to upack all static libs and build up libregex2dfa
+	# TODO: investigate libtool
+	mkdir $(LIB_DIR)/re2
+	cp $(TARGET_LIBRE2) $(LIB_DIR)/re2
+	cd $(LIB_DIR)/re2 && ar x libre2.a
+	mkdir $(LIB_DIR)/fst
+	cp $(TARGET_FSTLIB) $(LIB_DIR)/fst
+	cp $(TARGET_FSTSCRIPTLIB) $(LIB_DIR)/fst
+	cd $(LIB_DIR)/fst && ar x libfst.a
+	cd $(LIB_DIR)/fst && ar x libfstscript.a
+	$(AR) rsc $(TARGET_LIBREGEX2DFA) $(OBJ_LIBREGEX2DFA) $(LIB_DIR)/re2/*.o $(LIB_DIR)/fst/*.o
+	rm -rf $(LIB_DIR)/re2
+	rm -rf $(LIB_DIR)/fst
 
 $(NPM_DIR):
 	mkdir -p $(NPM_DIR)
