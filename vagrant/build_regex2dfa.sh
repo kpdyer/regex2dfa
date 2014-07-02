@@ -6,5 +6,6 @@ cd $BUILD_DIR/regex2dfa/third_party/openfst
 emconfigure ./configure --enable-bin --disable-shared --enable-static
 emmake make
 cd $BUILD_DIR/regex2dfa
+rm npm/regex2dfa.js
 emconfigure ./configure
 emmake make -j$CORES npm/regex2dfa.js
