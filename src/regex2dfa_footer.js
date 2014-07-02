@@ -3,7 +3,12 @@ var regex2dfa_func = Module.cwrap('_regex2dfa', 'number', ['number', 'number',
 ]);
 
 ab2str = function (buf) {
-  return String.fromCharCode.apply(null, new Uint8Array(buf));
+  var retval = '';
+  var ab = new Uint8Array(buf);
+  for (var i = 0; i < ab.length; i++) {
+    retval += String.fromCharCode(ab[i]);
+  }
+  return retval;
 }
 
 str2ab = function (str) {
@@ -22,7 +27,7 @@ regex2dfa = function (regex) {
   var regex_dh = new Uint8Array(Module.HEAPU8.buffer, ptr, regex_ab_len);
   regex_dh.set(new Uint8Array(regex_ab));
 
-  var dfa_len = 8192;
+  var dfa_len = 33554432; // be generous, allow a dfa up to 32MB
   ptr = Module._malloc(dfa_len);
   var dfa_ab = new Uint8Array(Module.HEAPU8.buffer, ptr, dfa_len);
   ptr = Module._malloc(4);
