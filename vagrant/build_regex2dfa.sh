@@ -14,5 +14,5 @@ rm npm/regex2dfa.js
 emconfigure ./configure
 emmake make npm/regex2dfa.js
 
-cd $BULID_DIR
+cd $BUILD_DIR
 cp -rfv regex2dfa /vagrant
