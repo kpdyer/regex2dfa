@@ -12,7 +12,7 @@ export GIT_EMSCRIPTEN=https://github.com/kripken/emscripten.git
 export GIT_EMSCRIPTEN_FASTCOMP=https://github.com/kripken/emscripten-fastcomp
 export GIT_EMSCRIPTEN_FASTCOMP_CLANG=https://github.com/kripken/emscripten-fastcomp-clang
 export EMCC_CORES=$CORES
-export EMSCRIPTEN_VERSION=1.20.0
+export EMSCRIPTEN_VERSION=1.21.1
 
 # gtest relies on cxxabi, so we need to include this following hack
 export CFLAGS="-O3"
