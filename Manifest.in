@@ -1,11 +1,10 @@
-LICENSE
-Makefile.in
-README.md
-bin/test
-configure
-configure.ac
-regex2dfa/__init__.py
-regex2dfa/tests.py
-tests/*.regex
-tests/*.dfa
-third_party/*
+include LICENSE
+include Makefile.in
+include README.md
+include bin/test
+include configure
+include configure.ac
+include regex2dfa/*.py
+include tests/*.regex
+include tests/*.dfa
+recursive-include third_party *
