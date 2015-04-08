@@ -67,7 +67,7 @@ $(NPM_DIR):
 $(OBJ_REGEX2DFA): $(TARGET_LIBRE2) $(TARGET_FSTLIB)
 
 $(TARGET_FSTLIB):
-	cd $(FST_DIR) && $(MAKE)
+	cd $(FST_DIR) && CFLAGS=-fPIC CXXFLAGS=-fPIC $(MAKE)
 
 $(TARGET_LIBRE2): $(RE2_DIR)/util/logging.h.fixed
 	cd $(RE2_DIR) && $(MAKE) obj/libre2.a
