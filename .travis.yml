@@ -13,4 +13,5 @@ python:
 install:
   - "python setup.py install"
 script:
+  - ./configure && make
   - "python setup.py test"
