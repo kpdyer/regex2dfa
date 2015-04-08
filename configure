@@ -1680,7 +1680,7 @@ $as_echo "$ac_cv_file_third_party_openfst_Makefile" >&6; }
 if test "x$ac_cv_file_third_party_openfst_Makefile" = xyes; then :
 
 else
-  cd third_party/openfst && ./configure --enable-bin --enable-static --disable-shared && cd ../..
+  cd third_party/openfst && ./configure CFLAGS='-fPIC' CXXFLAGS='-fPIC' --enable-bin --enable-static --disable-shared && cd ../..
 fi
 
 
