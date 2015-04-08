@@ -1,0 +1,11 @@
+LICENSE
+Makefile.in
+README.md
+bin/test
+configure
+configure.ac
+regex2dfa/__init__.py
+regex2dfa/tests.py
+tests/*.regex
+tests/*.dfa
+third_party/*

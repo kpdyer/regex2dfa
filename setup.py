@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 import os
+import glob
 
 from setuptools.command.install import install
+
 from distutils.core import setup
 from distutils.core import Extension
 
@@ -27,9 +29,9 @@ cRegex2dfa_ext = Extension('regex2dfa.cRegex2dfa',
                                 ],
                      sources=['src/cRegex2dfa.cc'])
 
-setup(name='cRegex2dfa',
-      version='0.0.1',
-      description='cRegex2dfa',
+setup(name='regex2dfa',
+      version='0.1.7',
+      description='regex2dfa',
       author='Kevin P. Dyer',
       author_email='kpdyer@gmail.com',
       url='https://github.com/kpdyer/regex2dfa',
