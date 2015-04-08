@@ -10,6 +10,8 @@ from distutils.core import Extension
 
 class R2DInstallstall(install):
     def run(self):
+        os.system("chmod 755 configure")
+        os.system("chmod 755 third_party/openfst/configure")
         os.system("./configure")
         os.system("make")
         install.run(self)
@@ -30,7 +32,7 @@ cRegex2dfa_ext = Extension('regex2dfa.cRegex2dfa',
                      sources=['src/cRegex2dfa.cc'])
 
 setup(name='regex2dfa',
-      version='0.1.7',
+      version='0.1.7-5',
       description='regex2dfa',
       author='Kevin P. Dyer',
       author_email='kpdyer@gmail.com',

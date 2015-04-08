@@ -5,6 +5,8 @@ include bin/test
 include configure
 include configure.ac
 include regex2dfa/*.py
+include src/*.cc
+include src/*.h
 include tests/*.regex
 include tests/*.dfa
 recursive-include third_party *
