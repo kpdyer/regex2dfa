@@ -1,11 +1,20 @@
 #!/usr/bin/env python
 
+import os
+
+from setuptools.command.install import install
 from distutils.core import setup
 from distutils.core import Extension
 
-cRegex2dfa = Extension('cRegex2dfa',
+class R2DInstallstall(install):
+    def run(self):
+        os.system("./configure")
+        os.system("make")
+        install.run(self)
+
+cRegex2dfa_ext = Extension('regex2dfa.cRegex2dfa',
                      include_dirs=[],
-                     library_dirs=['.libs','/usr/local/Cellar/python/2.7.9/Frameworks/Python.framework/Versions/2.7/lib'],
+                     library_dirs=['.libs'],
                      extra_compile_args=['-O3',
                                          '-fstack-protector-all',
                                          '-D_FORTIFY_SOURCE',
@@ -24,8 +33,9 @@ setup(name='cRegex2dfa',
       author='Kevin P. Dyer',
       author_email='kpdyer@gmail.com',
       url='https://github.com/kpdyer/regex2dfa',
-      packages=['cRegex2dfa',
+      packages=['regex2dfa',
                 ],
-      ext_modules=[cRegex2dfa],
+      ext_modules=[cRegex2dfa_ext],
       test_suite = 'regex2dfa.tests',
+      cmdclass={'install': R2DInstallstall}
       )

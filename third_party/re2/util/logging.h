@@ -20,7 +20,7 @@
 #define DCHECK_GT(val1, val2) assert((val1) > (val2))
 
 // Always-on checking
-#define CHECK(x)	if(x){}else RE2RE2RE2LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x
+#define CHECK(x)	if(x){}else RE2RE2RE2RE2LogMessageFatal(__FILE__, __LINE__).stream() << "Check failed: " #x
 #define CHECK_LT(x, y)	CHECK((x) < (y))
 #define CHECK_GT(x, y)	CHECK((x) > (y))
 #define CHECK_LE(x, y)	CHECK((x) <= (y))
@@ -28,10 +28,10 @@
 #define CHECK_EQ(x, y)	CHECK((x) == (y))
 #define CHECK_NE(x, y)	CHECK((x) != (y))
 
-#define LOG_INFO RE2RE2RE2LogMessage(__FILE__, __LINE__)
+#define LOG_INFO RE2RE2RE2RE2LogMessage(__FILE__, __LINE__)
 #define LOG_ERROR LOG_INFO
 #define LOG_WARNING LOG_INFO
-#define LOG_FATAL RE2RE2RE2LogMessageFatal(__FILE__, __LINE__)
+#define LOG_FATAL RE2RE2RE2RE2LogMessageFatal(__FILE__, __LINE__)
 #define LOG_QFATAL LOG_FATAL
 
 #define VLOG(x) if((x)>0){}else LOG_INFO.stream()
@@ -46,9 +46,9 @@
 
 #define LOG(severity) LOG_ ## severity.stream()
 
-class RE2RE2RE2LogMessage {
+class RE2RE2RE2RE2LogMessage {
  public:
-  RE2RE2RE2LogMessage(const char* file, int line) : flushed_(false) {
+  RE2RE2RE2RE2LogMessage(const char* file, int line) : flushed_(false) {
     stream() << file << ":" << line << ": ";
   }
   void Flush() {
@@ -58,7 +58,7 @@ class RE2RE2RE2LogMessage {
     if(write(2, s.data(), n) < 0) {}  // shut up gcc
     flushed_ = true;
   }
-  ~RE2RE2RE2LogMessage() {
+  ~RE2RE2RE2RE2LogMessage() {
     if (!flushed_) {
       Flush();
     }
@@ -68,19 +68,19 @@ class RE2RE2RE2LogMessage {
  private:
   bool flushed_;
   std::ostringstream str_;
-  DISALLOW_EVIL_CONSTRUCTORS(RE2RE2RE2LogMessage);
+  DISALLOW_EVIL_CONSTRUCTORS(RE2RE2RE2RE2LogMessage);
 };
 
-class RE2RE2RE2LogMessageFatal : public RE2RE2RE2LogMessage {
+class RE2RE2RE2RE2LogMessageFatal : public RE2RE2RE2RE2LogMessage {
  public:
-  RE2RE2RE2LogMessageFatal(const char* file, int line)
-    : RE2RE2RE2LogMessage(file, line) { }
-  ~RE2RE2RE2LogMessageFatal() {
+  RE2RE2RE2RE2LogMessageFatal(const char* file, int line)
+    : RE2RE2RE2RE2LogMessage(file, line) { }
+  ~RE2RE2RE2RE2LogMessageFatal() {
     Flush();
     abort();
   }
  private:
-  DISALLOW_EVIL_CONSTRUCTORS(RE2RE2RE2LogMessageFatal);
+  DISALLOW_EVIL_CONSTRUCTORS(RE2RE2RE2RE2LogMessageFatal);
 };
 
 #endif  // RE2_UTIL_LOGGING_H__
