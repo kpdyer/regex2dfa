@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 
-import os
+import subprocess
 
+from distutils.command.build_ext import build_ext
 from setuptools import setup
-from setuptools.command.install import install
 
 
-class R2DInstallstall(install):
-    def run(self):
-        os.system("chmod 755 configure")
-        os.system("chmod 755 third_party/openfst/configure")
-        os.system("./configure")
-        os.system("make")
-        install.run(self)
+class R2DBuild(build_ext):
+
+    def build_extension(self, ext):
+        # subprocess.check_call will raise an exception if any of the commands
+        # do not complete successfully.
+        subprocess.check_call(['chmod', '755', 'configure'])
+        subprocess.check_call(['chmod', '755', 'third_party/openfst/configure'])
+        subprocess.check_call(['./configure'])
+        subprocess.check_call(['make'])
+        return build_ext.build_extension(self, ext)
 
 
 setup(
@@ -27,5 +30,5 @@ setup(
     install_requires=['cffi>=1.0.0'],
     cffi_modules=['regex2dfa_build.py:ffi'],
     test_suite='tests',
-    cmdclass={'install': R2DInstallstall}
+    cmdclass={'build_ext': R2DBuild},
 )

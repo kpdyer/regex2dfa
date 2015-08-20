@@ -13,3 +13,5 @@ contrib/
 */*.o
 _regex2dfa*
 *.egg-info
+build
+dist
