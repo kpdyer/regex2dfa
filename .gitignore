@@ -11,3 +11,7 @@ config.status
 contrib/
 *.o
 */*.o
+_regex2dfa*
+*.egg-info
+build
+dist

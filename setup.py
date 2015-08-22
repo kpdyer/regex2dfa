@@ -1,45 +1,34 @@
 #!/usr/bin/env python
 
-import os
-import glob
+import subprocess
 
-from setuptools.command.install import install
+from distutils.command.build_ext import build_ext
+from setuptools import setup
 
-from distutils.core import setup
-from distutils.core import Extension
 
-class R2DInstallstall(install):
-    def run(self):
-        os.system("chmod 755 configure")
-        os.system("chmod 755 third_party/openfst/configure")
-        os.system("./configure")
-        os.system("make")
-        install.run(self)
+class R2DBuild(build_ext):
 
-cRegex2dfa_ext = Extension('regex2dfa.cRegex2dfa',
-                     include_dirs=[],
-                     library_dirs=['.libs'],
-                     extra_compile_args=['-O3',
-                                         '-fstack-protector-all',
-                                         '-D_FORTIFY_SOURCE',
-                                         '-fPIE',
-                                         ],
-                     extra_link_args=['-fPIC',
-                                      ],
-                     libraries=['regex2dfa',
-                                'python2.7',
-                                ],
-                     sources=['src/cRegex2dfa.cc'])
+    def build_extension(self, ext):
+        # subprocess.check_call will raise an exception if any of the commands
+        # do not complete successfully.
+        subprocess.check_call(['chmod', '755', 'configure'])
+        subprocess.check_call(['chmod', '755', 'third_party/openfst/configure'])
+        subprocess.check_call(['./configure'])
+        subprocess.check_call(['make'])
+        return build_ext.build_extension(self, ext)
 
-setup(name='regex2dfa',
-      version='0.1.7-5',
-      description='regex2dfa',
-      author='Kevin P. Dyer',
-      author_email='kpdyer@gmail.com',
-      url='https://github.com/kpdyer/regex2dfa',
-      packages=['regex2dfa',
-                ],
-      ext_modules=[cRegex2dfa_ext],
-      test_suite = 'regex2dfa.tests',
-      cmdclass={'install': R2DInstallstall}
-      )
+
+setup(
+    name='regex2dfa',
+    version='0.1.7-5',
+    description='regex2dfa',
+    author='Kevin P. Dyer',
+    author_email='kpdyer@gmail.com',
+    url='https://github.com/kpdyer/regex2dfa',
+    py_modules=['regex2dfa'],
+    setup_requires=['cffi>=1.0.0'],
+    install_requires=['cffi>=1.0.0'],
+    cffi_modules=['regex2dfa_build.py:ffi'],
+    test_suite='tests',
+    cmdclass={'build_ext': R2DBuild},
+)
