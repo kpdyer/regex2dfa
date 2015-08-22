@@ -4,6 +4,7 @@ include README.md
 include bin/test
 include configure
 include configure.ac
+include *.py
 include regex2dfa/*.py
 include src/*.cc
 include src/*.h
