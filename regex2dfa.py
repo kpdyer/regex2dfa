@@ -6,7 +6,7 @@ def regex2dfa(regex):
 
     # We use strdup() to get a copy of the minimized DFA, so we need to free
     # the C string ourselves.
-    c_dfa = lib.cffi_regex2dfa(regex)
+    c_dfa = lib.cffi_regex2dfa(regex, len(regex))
     dfa = ffi.string(c_dfa)
     lib.free(c_dfa)
 

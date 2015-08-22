@@ -9,7 +9,7 @@ ffi = FFI()
 
 ffi.cdef(
     """
-    const char * cffi_regex2dfa(char *regex);
+    const char * cffi_regex2dfa(char *regex, uint32_t len);
     void free(void *ptr);
     """
 )
@@ -20,8 +20,8 @@ ffi.set_source(
     #include "%s"
 
     extern "C" {
-        extern const char * cffi_regex2dfa(char *regex) {
-            const std::string input_regex = std::string(regex);
+        extern const char * cffi_regex2dfa(char *regex, uint32_t len) {
+            const std::string input_regex = std::string(regex, len);
 
             std::string minimized_dfa;
 
