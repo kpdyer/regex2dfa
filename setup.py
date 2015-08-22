@@ -20,7 +20,7 @@ class R2DBuild(build_ext):
 
 setup(
     name='regex2dfa',
-    version='0.1.8',
+    version='0.1.8-2',
     description='regex2dfa',
     author='Kevin P. Dyer',
     author_email='kpdyer@gmail.com',
