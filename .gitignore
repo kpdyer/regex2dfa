@@ -1,17 +1,19 @@
-third_party/openfst
-third_party/re2
-Makefile
-autom4te.cache/
-bin/fstcompile
-bin/fstminimize
-bin/fstprint
-bin/regex2dfa
-config.log
-config.status
-contrib/
+# Build directory
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Compiled files
 *.o
-*/*.o
-_regex2dfa*
-*.egg-info
-build
-dist
+*.a
+*.so
+*.dylib
+
+# OS files
+.DS_Store
+Thumbs.db
