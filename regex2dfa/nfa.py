@@ -49,16 +49,21 @@ class NFA:
         """Compute epsilon closure of a set of states."""
         closure = set(states)
         stack = list(states)
-        
+        nfa_states = self.states
+
         while stack:
             state = stack.pop()
-            if state in self.states:
-                eps_targets = self.states[state].transitions.get(EPSILON, set())
-                for target in eps_targets:
-                    if target not in closure:
-                        closure.add(target)
-                        stack.append(target)
-        
+            st = nfa_states.get(state)
+            if st is None:
+                continue
+            eps_targets = st.transitions.get(EPSILON)
+            if not eps_targets:
+                continue
+            for target in eps_targets:
+                if target not in closure:
+                    closure.add(target)
+                    stack.append(target)
+
         return closure
     
     def move(self, states: Set[int], char: int) -> Set[int]:

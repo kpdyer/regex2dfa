@@ -2,7 +2,8 @@
 Subset construction - converts NFA to DFA using the powerset method.
 """
 
-from typing import Set, Dict, FrozenSet
+from collections import deque
+from typing import Dict, FrozenSet, Set
 
 from .nfa import NFA, EPSILON
 from .dfa import DFA
@@ -11,57 +12,61 @@ from .dfa import DFA
 def nfa_to_dfa(nfa: NFA) -> DFA:
     """
     Convert an NFA to a DFA using subset construction.
-    
+
     Each DFA state represents a set of NFA states.
     We use BFS to explore all reachable DFA states.
     """
     dfa = DFA()
-    
+    nfa_states = nfa.states
+    accept = nfa.accept
+    closure = nfa.epsilon_closure
+
     # Map from frozen set of NFA states to DFA state id
     state_map: Dict[FrozenSet[int], int] = {}
-    
-    # Get all characters used in the NFA (excluding epsilon)
-    alphabet: Set[int] = set()
-    for state in nfa.states.values():
-        for char in state.transitions.keys():
-            if char != EPSILON:
-                alphabet.add(char)
-    
+
     # Start with epsilon closure of NFA start state
-    start_set = frozenset(nfa.epsilon_closure({nfa.start}))
-    is_accept = nfa.accept in start_set
-    
-    start_id = dfa.new_state(is_accept)
+    start_set = frozenset(closure({nfa.start}))
+
+    start_id = dfa.new_state(accept in start_set)
     dfa.start = start_id
     state_map[start_set] = start_id
-    
+
     # BFS to explore all reachable DFA states
-    worklist = [start_set]
-    
+    worklist: deque = deque((start_set,))
+
     while worklist:
-        current_set = worklist.pop(0)
+        current_set = worklist.popleft()
         current_id = state_map[current_set]
-        
-        # For each character in the alphabet
-        for char in alphabet:
-            # Compute the set of NFA states reachable on this character
-            move_set = nfa.move(current_set, char)
-            if not move_set:
+
+        # Gather every non-epsilon transition out of the states in this set in a
+        # single pass, grouped by character. This visits only characters that
+        # actually occur, instead of scanning the whole alphabet per state.
+        moves: Dict[int, Set[int]] = {}
+        for state in current_set:
+            st = nfa_states.get(state)
+            if st is None:
                 continue
-            
-            # Take epsilon closure
-            next_set = frozenset(nfa.epsilon_closure(move_set))
-            
+            for char, targets in st.transitions.items():
+                if char == EPSILON:
+                    continue
+                group = moves.get(char)
+                if group is None:
+                    moves[char] = set(targets)
+                else:
+                    group |= targets
+
+        for char, move_set in moves.items():
+            # Take epsilon closure of the move set to form the next DFA state.
+            next_set = frozenset(closure(move_set))
+
             # Check if this DFA state already exists
-            if next_set not in state_map:
-                is_accept = nfa.accept in next_set
-                next_id = dfa.new_state(is_accept)
+            next_id = state_map.get(next_set)
+            if next_id is None:
+                next_id = dfa.new_state(accept in next_set)
                 state_map[next_set] = next_id
                 worklist.append(next_set)
-            else:
-                next_id = state_map[next_set]
-            
+
             # Add transition
             dfa.add_transition(current_id, char, next_id)
-    
+
     return dfa
