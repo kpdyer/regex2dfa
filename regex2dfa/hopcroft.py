@@ -5,15 +5,15 @@ Uses partition refinement to find the minimal DFA.
 
 The input DFAs are *partial*: a state may have no transition on a given symbol,
 which semantically means "reject" (a transition to an implicit dead state).
-Hopcroft's algorithm is only correct on a *complete* DFA, so minimization runs
+Hopcroft's algorithm is only correct on a *complete* DFA, so minimization is run
 against a completed view in which every (state, symbol) pair has a target -- real
 transitions where they exist, and a virtual dead state everywhere else. The dead
-state (and any real trap states equivalent to it) is dropped when the minimized
-DFA is rebuilt, restoring the partial representation.
+state (and any real trap states that turn out to be equivalent to it) is dropped
+when the minimized DFA is rebuilt, restoring the partial representation.
 """
 
-from typing import Set, Dict, List, Tuple
-from collections import deque
+from typing import Dict, List, Set, Tuple
+from collections import defaultdict, deque
 
 from .dfa import DFA
 
@@ -24,9 +24,8 @@ _DEAD = -1
 
 def minimize_dfa(dfa: DFA) -> DFA:
     """
-    Minimize a DFA using Hopcroft's algorithm.
+    Minimize a DFA using Hopcroft's algorithm (partition refinement).
 
-    The algorithm works by partition refinement:
     1. Complete the transition function with a virtual dead state so the
        algorithm's correctness assumptions hold for partial DFAs.
     2. Start with two partitions: accepting and non-accepting states.
@@ -36,141 +35,143 @@ def minimize_dfa(dfa: DFA) -> DFA:
     if not dfa.states:
         return dfa
 
-    # Get the alphabet
     alphabet = dfa.get_alphabet()
     if not alphabet:
         # No transitions anywhere; nothing to merge beyond the trivial case.
         return _renumber_states(dfa)
 
-    # Initial partition: accepting vs non-accepting states. The virtual dead
-    # state is non-accepting; keeping it in the partition is what makes the
-    # refinement distinguish states that differ only by a missing transition.
-    accepting = frozenset(set(dfa.accept_states) & set(dfa.states))
-    non_accepting = frozenset((set(dfa.states) - set(dfa.accept_states)) | {_DEAD})
+    states = dfa.states
+    accept_states = dfa.accept_states
 
-    # P is the current partition (set of blocks)
-    P: Set[frozenset] = set()
+    # Initial partition: accepting vs non-accepting. The dead state is
+    # non-accepting.
+    accepting: Set[int] = set(accept_states) & set(states)
+    non_accepting: Set[int] = (set(states) - accepting) | {_DEAD}
+
+    partition: List[Set[int]] = []
     if accepting:
-        P.add(accepting)
-    P.add(non_accepting)  # always non-empty (contains the dead state)
+        partition.append(accepting)
+    partition.append(non_accepting)
 
-    if len(P) <= 1:
-        # No accepting states at all (empty language); nothing to refine.
+    if len(partition) == 1:
+        # Every real state is non-accepting (empty language); minimal already.
         return _renumber_states(dfa)
 
-    # W is the worklist of blocks to process
-    W: deque = deque()
+    block_of: Dict[int, int] = {}
+    for idx, block in enumerate(partition):
+        for state in block:
+            block_of[state] = idx
 
-    # Start with the smaller of accepting/non-accepting
-    if len(accepting) <= len(non_accepting):
-        W.append(accepting)
-    else:
-        W.append(non_accepting)
-
-    # Build reverse transition map over the *completed* transition function:
-    # (target, char) -> set of source states, with missing transitions and the
-    # dead state routed to _DEAD.
-    reverse: Dict[Tuple[int, int], Set[int]] = {}
-    for state_id, state in dfa.states.items():
+    # Predecessor map over the *completed* transition function:
+    # preds[(target, char)] = set of states whose char-transition lands on target
+    # (with missing transitions and the dead state routed to _DEAD).
+    preds: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
+    for state_id, state in states.items():
         transitions = state.transitions
         for char in alphabet:
-            key = (transitions.get(char, _DEAD), char)
-            if key not in reverse:
-                reverse[key] = set()
-            reverse[key].add(state_id)
+            target = transitions.get(char, _DEAD)
+            preds[(target, char)].add(state_id)
     for char in alphabet:
-        key = (_DEAD, char)
-        if key not in reverse:
-            reverse[key] = set()
-        reverse[key].add(_DEAD)
+        preds[(_DEAD, char)].add(_DEAD)
 
-    # Refine partitions
-    while W:
-        A = W.popleft()
+    # Worklist of (block_index, char); in_worklist mirrors it for O(1) lookups.
+    smaller = 0 if len(partition[0]) <= len(partition[1]) else 1
+    worklist: deque = deque()
+    in_worklist: Set[Tuple[int, int]] = set()
+    for char in alphabet:
+        item = (smaller, char)
+        worklist.append(item)
+        in_worklist.add(item)
 
-        for char in alphabet:
-            # X = states that transition to A on char
-            X: Set[int] = set()
-            for state in A:
-                key = (state, char)
-                if key in reverse:
-                    X |= reverse[key]
+    while worklist:
+        a_idx, char = worklist.popleft()
+        in_worklist.discard((a_idx, char))
 
-            if not X:
-                continue
+        # X = states that transition into block A on `char`.
+        block_a = partition[a_idx]
+        X: Set[int] = set()
+        for state in block_a:
+            p = preds.get((state, char))
+            if p:
+                X |= p
+        if not X:
+            continue
 
-            # Check each block in P
-            new_P: Set[frozenset] = set()
-            for Y in P:
-                # Split Y into states in X and states not in X
-                intersection = Y & X
-                difference = Y - X
+        # Only blocks that actually contain a predecessor can need splitting.
+        touched: Dict[int, Set[int]] = defaultdict(set)
+        for state in X:
+            touched[block_of[state]].add(state)
 
-                if intersection and difference:
-                    # Y needs to be split
-                    new_P.add(frozenset(intersection))
-                    new_P.add(frozenset(difference))
+        for y_idx, intersection in touched.items():
+            block_y = partition[y_idx]
+            if len(intersection) == len(block_y):
+                continue  # X fully contains Y; no split.
 
-                    # Update worklist
-                    if Y in W:
-                        W.remove(Y)
-                        W.append(frozenset(intersection))
-                        W.append(frozenset(difference))
-                    else:
-                        if len(intersection) <= len(difference):
-                            W.append(frozenset(intersection))
-                        else:
-                            W.append(frozenset(difference))
+            difference = block_y - intersection
+            partition[y_idx] = intersection
+            new_idx = len(partition)
+            partition.append(difference)
+            for state in difference:
+                block_of[state] = new_idx
+
+            # Classic Hopcroft worklist update.
+            for c in alphabet:
+                if (y_idx, c) in in_worklist:
+                    new_item = (new_idx, c)
+                    worklist.append(new_item)
+                    in_worklist.add(new_item)
                 else:
-                    new_P.add(Y)
+                    if len(intersection) <= len(difference):
+                        item = (y_idx, c)
+                    else:
+                        item = (new_idx, c)
+                    worklist.append(item)
+                    in_worklist.add(item)
 
-            P = new_P
-
-    # Build the minimized DFA
-    return _build_minimized_dfa(dfa, P)
+    return _build_minimized_dfa(dfa, partition)
 
 
-def _build_minimized_dfa(old_dfa: DFA, partition: Set[frozenset]) -> DFA:
+def _build_minimized_dfa(old_dfa: DFA, partition: List[Set[int]]) -> DFA:
     """Build a new DFA from the partition, dropping the dead block."""
     new_dfa = DFA()
 
-    # Identify the block containing the virtual dead state (and any real trap
+    # Identify the block that contains the virtual dead state (and any real trap
     # states equivalent to it). It must not appear in the output.
     dead_block = None
-    state_to_block: Dict[int, frozenset] = {}
-    for block in partition:
+    state_to_block: Dict[int, int] = {}
+    for idx, block in enumerate(partition):
         if _DEAD in block:
-            dead_block = block
+            dead_block = idx
         for state in block:
-            state_to_block[state] = block
+            state_to_block[state] = idx
 
-    # Map each surviving block to a new state id
-    block_to_id: Dict[frozenset, int] = {}
+    old_states = old_dfa.states
+    accept_states = old_dfa.accept_states
 
-    # Find the start block and create it first
+    # Map each surviving block to a new state id, start block first.
+    block_to_id: Dict[int, int] = {}
     start_block = state_to_block.get(old_dfa.start)
-    if start_block is not None and start_block is not dead_block:
-        is_accept = any(s in old_dfa.accept_states for s in start_block)
+    if start_block is not None and start_block != dead_block:
+        is_accept = any(s in accept_states for s in partition[start_block])
         start_id = new_dfa.new_state(is_accept)
         new_dfa.start = start_id
         block_to_id[start_block] = start_id
 
-    # Create remaining states
-    for block in partition:
-        if block is dead_block or block in block_to_id:
+    for idx, block in enumerate(partition):
+        if idx == dead_block or idx in block_to_id:
             continue
-        is_accept = any(s in old_dfa.accept_states for s in block)
-        block_to_id[block] = new_dfa.new_state(is_accept)
+        is_accept = any(s in accept_states for s in block)
+        block_to_id[idx] = new_dfa.new_state(is_accept)
 
-    # Add transitions (use a real representative state from each block)
-    for block in partition:
-        if block is dead_block:
+    # Add transitions using a real representative state from each block.
+    for idx, block in enumerate(partition):
+        if idx == dead_block:
             continue
-        new_state_id = block_to_id[block]
-        rep = next((s for s in block if s in old_dfa.states), None)
+        new_state_id = block_to_id[idx]
+        rep = next((s for s in block if s in old_states), None)
         if rep is None:
             continue
-        for char, target in old_dfa.states[rep].transitions.items():
+        for char, target in old_states[rep].transitions.items():
             target_block = state_to_block.get(target)
             if target_block is not None and target_block in block_to_id:
                 new_dfa.add_transition(new_state_id, char, block_to_id[target_block])
@@ -188,7 +189,7 @@ def _renumber_states(dfa: DFA) -> DFA:
     new_dfa = DFA()
     old_to_new: Dict[int, int] = {}
 
-    # BFS from start state
+    # BFS from start state.
     visited = set()
     queue = deque([dfa.start])
 
@@ -198,7 +199,7 @@ def _renumber_states(dfa: DFA) -> DFA:
             continue
         visited.add(old_id)
 
-        # Assign new ID
+        # Assign new ID.
         is_accept = old_id in dfa.accept_states
         new_id = new_dfa.new_state(is_accept)
         old_to_new[old_id] = new_id
@@ -217,7 +218,7 @@ def _renumber_states(dfa: DFA) -> DFA:
                 if target not in visited:
                     queue.append(target)
 
-    # Add transitions with new IDs
+    # Add transitions with new IDs.
     for old_id in visited:
         if old_id in dfa.states:
             new_id = old_to_new[old_id]
