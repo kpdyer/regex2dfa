@@ -12,7 +12,7 @@ state (and any real trap states equivalent to it) is dropped when the minimized
 DFA is rebuilt, restoring the partial representation.
 """
 
-from typing import Set, Dict, List, Tuple
+from typing import Set, Dict
 from collections import deque
 
 from .dfa import DFA
@@ -45,89 +45,109 @@ def minimize_dfa(dfa: DFA) -> DFA:
     # Initial partition: accepting vs non-accepting states. The virtual dead
     # state is non-accepting; keeping it in the partition is what makes the
     # refinement distinguish states that differ only by a missing transition.
-    accepting = frozenset(set(dfa.accept_states) & set(dfa.states))
-    non_accepting = frozenset((set(dfa.states) - set(dfa.accept_states)) | {_DEAD})
+    all_states = set(dfa.states)
+    accepting = all_states & set(dfa.accept_states)
+    non_accepting = (all_states - accepting) | {_DEAD}
 
-    # P is the current partition (set of blocks)
-    P: Set[frozenset] = set()
-    if accepting:
-        P.add(accepting)
-    P.add(non_accepting)  # always non-empty (contains the dead state)
-
-    if len(P) <= 1:
+    if not accepting:
         # No accepting states at all (empty language); nothing to refine.
         return _renumber_states(dfa)
 
-    # W is the worklist of blocks to process
-    W: deque = deque()
-
-    # Start with the smaller of accepting/non-accepting
-    if len(accepting) <= len(non_accepting):
-        W.append(accepting)
-    else:
-        W.append(non_accepting)
-
-    # Build reverse transition map over the *completed* transition function:
-    # (target, char) -> set of source states, with missing transitions and the
-    # dead state routed to _DEAD.
-    reverse: Dict[Tuple[int, int], Set[int]] = {}
+    # Build reverse transition map over the *completed* transition function,
+    # nested as char -> {target -> set of source states}. Keeping char at the
+    # outer level lets the refinement hoist the per-char predecessor table out
+    # of its inner loop and avoids allocating a (state, char) tuple per lookup.
+    # Missing transitions and the dead state route to _DEAD.
+    reverse: Dict[int, Dict[int, Set[int]]] = {char: {} for char in alphabet}
     for state_id, state in dfa.states.items():
         transitions = state.transitions
         for char in alphabet:
-            key = (transitions.get(char, _DEAD), char)
-            if key not in reverse:
-                reverse[key] = set()
-            reverse[key].add(state_id)
+            pred = reverse[char]
+            target = transitions.get(char, _DEAD)
+            bucket = pred.get(target)
+            if bucket is None:
+                pred[target] = bucket = set()
+            bucket.add(state_id)
     for char in alphabet:
-        key = (_DEAD, char)
-        if key not in reverse:
-            reverse[key] = set()
-        reverse[key].add(_DEAD)
+        pred = reverse[char]
+        bucket = pred.get(_DEAD)
+        if bucket is None:
+            pred[_DEAD] = bucket = set()
+        bucket.add(_DEAD)
 
-    # Refine partitions
+    # Partition refinement (Hopcroft). Blocks are identified by an integer id so
+    # that a split only touches the blocks that actually intersect the splitter,
+    # rather than rebuilding the whole partition on every step.
+    #
+    #   partition: block_id -> set of states in that block
+    #   block_of:  state -> block_id it currently belongs to
+    partition: Dict[int, Set[int]] = {0: accepting, 1: non_accepting}
+    block_of: Dict[int, int] = {}
+    for s in accepting:
+        block_of[s] = 0
+    for s in non_accepting:
+        block_of[s] = 1
+    next_block = 2
+
+    # Worklist of block ids still to use as splitters. Start with the smaller
+    # initial block. Each split appends only its (smaller) new half, so a block
+    # id is enqueued at most once and no membership/removal scan is needed.
+    W: deque = deque()
+    W.append(0 if len(accepting) <= len(non_accepting) else 1)
+
     while W:
-        A = W.popleft()
+        # Snapshot the splitter: the block may itself be split while we iterate
+        # the alphabet, but the set removed from the worklist stays fixed.
+        A = frozenset(partition[W.popleft()])
 
         for char in alphabet:
-            # X = states that transition to A on char
+            # X = states whose transition on char lands in A.
+            pred = reverse[char]
             X: Set[int] = set()
             for state in A:
-                key = (state, char)
-                if key in reverse:
-                    X |= reverse[key]
+                bucket = pred.get(state)
+                if bucket:
+                    X |= bucket
 
             if not X:
                 continue
 
-            # Check each block in P
-            new_P: Set[frozenset] = set()
-            for Y in P:
-                # Split Y into states in X and states not in X
-                intersection = Y & X
-                difference = Y - X
+            # Group the states of X by the block they currently live in, so we
+            # examine only blocks that X actually reaches.
+            affected: Dict[int, Set[int]] = {}
+            for s in X:
+                b = block_of[s]
+                grp = affected.get(b)
+                if grp is None:
+                    affected[b] = grp = set()
+                grp.add(s)
 
-                if intersection and difference:
-                    # Y needs to be split
-                    new_P.add(frozenset(intersection))
-                    new_P.add(frozenset(difference))
+            for b, inter in affected.items():
+                block = partition[b]
+                if len(inter) == len(block):
+                    continue  # block is wholly inside X; no split
 
-                    # Update worklist
-                    if Y in W:
-                        W.remove(Y)
-                        W.append(frozenset(intersection))
-                        W.append(frozenset(difference))
-                    else:
-                        if len(intersection) <= len(difference):
-                            W.append(frozenset(intersection))
-                        else:
-                            W.append(frozenset(difference))
+                # Move the smaller side into a fresh block, keep the larger in b.
+                other = block - inter
+                if len(inter) <= len(other):
+                    move, partition[b] = inter, other
                 else:
-                    new_P.add(Y)
+                    move, partition[b] = other, inter
 
-            P = new_P
+                nb = next_block
+                next_block += 1
+                partition[nb] = move
+                for s in move:
+                    block_of[s] = nb
+                # Hopcroft's rule: if b was already queued, both halves must be
+                # queued (b stays, so we only add the new half); if it was not,
+                # add the smaller half. `move` is the smaller half by
+                # construction, so appending nb satisfies both cases.
+                W.append(nb)
 
-    # Build the minimized DFA
-    return _build_minimized_dfa(dfa, P)
+    # Build the minimized DFA from the final blocks.
+    blocks = {frozenset(states) for states in partition.values()}
+    return _build_minimized_dfa(dfa, blocks)
 
 
 def _build_minimized_dfa(old_dfa: DFA, partition: Set[frozenset]) -> DFA:
