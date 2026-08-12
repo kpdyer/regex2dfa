@@ -7,8 +7,6 @@
 
 Convert regular expressions to minimized DFAs in AT&T FST format.
 
-**Pure Python. Zero dependencies. Results cached in memory.**
-
 ## Installation
 
 ```bash
