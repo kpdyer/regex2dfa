@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/kpdyer/regex2dfa/actions/workflows/ci.yml/badge.svg)](https://github.com/kpdyer/regex2dfa/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/regex2dfa.svg)](https://pypi.org/project/regex2dfa/)
-[![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Convert regular expressions to minimized DFAs in AT&T FST format.
