@@ -12,7 +12,7 @@ from .subset import nfa_to_dfa
 from .hopcroft import minimize_dfa
 from .formatter import format_att
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __all__ = [
     "regex2dfa",
     "Regex2DFA",
