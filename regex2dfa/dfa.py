@@ -3,7 +3,7 @@ DFA (Deterministic Finite Automaton) data structures.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Set, List, Tuple
+from typing import Dict, Set
 
 
 @dataclass
@@ -41,11 +41,3 @@ class DFA:
         for state in self.states.values():
             alphabet |= set(state.transitions.keys())
         return alphabet
-    
-    def get_transitions(self) -> List[Tuple[int, int, int, int]]:
-        """Get all transitions as (src, dst, input, output) tuples."""
-        transitions = []
-        for state_id, state in self.states.items():
-            for char, target in state.transitions.items():
-                transitions.append((state_id, target, char, char))
-        return transitions

@@ -1,29 +1,10 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+Security fixes are provided only for the latest released version.
 
-Security fixes are provided only for the latest released version of `regex2dfa`.
+Report vulnerabilities through [GitHub's private reporting form](https://github.com/kpdyer/regex2dfa/security/advisories/new),
+including affected versions, impact and a minimal reproduction. Please do not
+report security issues publicly.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.2.x   | :white_check_mark: |
-| < 0.2   | :x:                |
-
-## Reporting a Vulnerability
-
-Please report security vulnerabilities **privately** — do not open a public
-issue, pull request, or discussion for security problems.
-
-Use GitHub's private vulnerability reporting:
-
-1. Go to the repository's **Security** tab:
-   <https://github.com/kpdyer/regex2dfa/security>
-2. Click **Report a vulnerability** to open a private advisory
-   (direct link: <https://github.com/kpdyer/regex2dfa/security/advisories/new>).
-3. Include as much detail as you can: affected version(s), a description of the
-   issue and its impact, and a minimal reproduction (input regex / steps) if
-   possible.
-
-You can expect an initial acknowledgement within a few days. Once a fix is
-ready, it will be released in a new version and, where appropriate, published as
-a GitHub Security Advisory crediting the reporter.
+Expect an initial acknowledgement within a few days. Fixes ship in a new release
+and, where appropriate, a GitHub Security Advisory crediting the reporter.

@@ -11,7 +11,6 @@ from typing import List, Set
 
 class RegexError(Exception):
     """Exception raised for invalid regex syntax."""
-    pass
 
 
 class TokenType(Enum):
@@ -137,25 +136,21 @@ class RegexParser:
     def _tokenize(self) -> List[Token]:
         """Convert regex string to token list."""
         tokens: List[Token] = []
-        paren_depth = 0
         paren_positions: List[int] = []
         
         while not self.is_at_end():
             pos = self.pos
             c = self.advance()
-            token = Token(TokenType.LITERAL)
             
             if c == '^' or c == '$':
                 # Skip anchors (implicit in our matching)
                 continue
             elif c == '(':
-                paren_depth += 1
                 paren_positions.append(pos)
                 token = Token(TokenType.LPAREN)
             elif c == ')':
-                if paren_depth == 0:
+                if not paren_positions:
                     raise RegexError(f"Unmatched ')' at position {pos}")
-                paren_depth -= 1
                 paren_positions.pop()
                 token = Token(TokenType.RPAREN)
             elif c == '*':
@@ -182,7 +177,7 @@ class RegexParser:
             
             tokens.append(token)
         
-        if paren_depth > 0:
+        if paren_positions:
             raise RegexError(f"Unclosed '(' at position {paren_positions[-1]}")
         
         # Check for trailing alternation

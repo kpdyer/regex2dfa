@@ -9,8 +9,6 @@ class TestCaching:
     
     def test_cache_hit(self):
         """Second call hits cache."""
-        clear_cache()
-        
         regex2dfa("(x|y)+")
         info1 = cache_info()
         assert info1.misses == 1
@@ -22,8 +20,6 @@ class TestCaching:
     
     def test_cache_same_result(self):
         """Cached result matches original."""
-        clear_cache()
-        
         result1 = regex2dfa("a+")
         result2 = regex2dfa("a+")
         
@@ -31,8 +27,6 @@ class TestCaching:
     
     def test_clear_cache(self):
         """clear_cache() works."""
-        clear_cache()
-        
         regex2dfa("test")
         assert cache_info().currsize >= 1
         
@@ -58,7 +52,27 @@ class TestOOPInterface:
         converter = Regex2DFA("a")
         assert len(converter.nfa.states) == 2
     
-    def test_empty(self):
-        """Empty regex."""
-        converter = Regex2DFA("")
+    @pytest.mark.parametrize("pattern", ["", "^$", "()"])
+    def test_empty(self, pattern):
+        """Empty patterns expose an accepting automaton at every stage."""
+        converter = Regex2DFA(pattern)
+        assert converter.postfix == []
+        assert converter.nfa.start == converter.nfa.accept
+        for dfa in (converter.dfa, converter.minimized_dfa):
+            assert set(dfa.states) == {dfa.start}
+            assert dfa.accept_states == {dfa.start}
+            assert dfa.states[dfa.start].transitions == {}
         assert converter.to_att() == "0"
+
+
+@pytest.mark.parametrize("pattern, expected", [
+    (r"\$", "0\t1\t36\t36\n1"),
+    (r"a\$", "0\t1\t97\t97\n1\t2\t36\t36\n2"),
+    (r"\^a\$", "0\t1\t94\t94\n1\t2\t97\t97\n2\t3\t36\t36\n3"),
+    (r"\\$", "0\t1\t92\t92\n1"),
+    (r"\\\$", "0\t1\t92\t92\n1\t2\t36\t36\n2"),
+    (r"^\$$", "0\t1\t36\t36\n1"),
+])
+def test_escaped_anchors(pattern, expected):
+    assert regex2dfa(pattern) == expected
+    assert Regex2DFA(pattern).to_att() == expected

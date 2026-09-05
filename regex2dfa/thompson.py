@@ -6,7 +6,7 @@ from typing import List
 from dataclasses import dataclass
 
 from .parser import Token, TokenType
-from .nfa import NFA, EPSILON
+from .nfa import NFA
 
 
 @dataclass
@@ -70,8 +70,7 @@ def build_nfa(postfix: List[Token]) -> NFA:
             
             stack.append(NFAFragment(start, accept))
         
-        elif token.type == TokenType.STAR:
-            # Kleene star: zero or more
+        elif token.type in {TokenType.STAR, TokenType.PLUS, TokenType.QUESTION}:
             if not stack:
                 continue
             frag = stack.pop()
@@ -79,50 +78,14 @@ def build_nfa(postfix: List[Token]) -> NFA:
             start = nfa.new_state()
             accept = nfa.new_state()
             
-            # Can skip (zero occurrences)
-            nfa.add_epsilon(start, accept)
-            # Can enter the fragment
             nfa.add_epsilon(start, frag.start)
-            # Can loop back
-            nfa.add_epsilon(frag.accept, frag.start)
-            # Can exit
             nfa.add_epsilon(frag.accept, accept)
-            
-            stack.append(NFAFragment(start, accept))
-        
-        elif token.type == TokenType.PLUS:
-            # One or more: like star but must go through at least once
-            if not stack:
-                continue
-            frag = stack.pop()
-            
-            start = nfa.new_state()
-            accept = nfa.new_state()
-            
-            # Must enter the fragment
-            nfa.add_epsilon(start, frag.start)
-            # Can loop back
-            nfa.add_epsilon(frag.accept, frag.start)
-            # Can exit
-            nfa.add_epsilon(frag.accept, accept)
-            
-            stack.append(NFAFragment(start, accept))
-        
-        elif token.type == TokenType.QUESTION:
-            # Optional: zero or one
-            if not stack:
-                continue
-            frag = stack.pop()
-            
-            start = nfa.new_state()
-            accept = nfa.new_state()
-            
-            # Can skip (zero occurrences)
-            nfa.add_epsilon(start, accept)
-            # Can enter the fragment
-            nfa.add_epsilon(start, frag.start)
-            # Exit after fragment
-            nfa.add_epsilon(frag.accept, accept)
+
+            # Star and optional can skip; star and plus can loop.
+            if token.type != TokenType.PLUS:
+                nfa.add_epsilon(start, accept)
+            if token.type != TokenType.QUESTION:
+                nfa.add_epsilon(frag.accept, frag.start)
             
             stack.append(NFAFragment(start, accept))
     

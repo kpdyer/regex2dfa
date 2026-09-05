@@ -14,7 +14,7 @@ def format_att(dfa: DFA) -> str:
     - Transitions: src<TAB>dst<TAB>input<TAB>output
     - Final states: state_id (one per line, at the end)
 
-    Labels are ASCII byte values.
+    Labels are integer character values (input and output are identical).
     """
     lines: List[str] = []
     states = dfa.states

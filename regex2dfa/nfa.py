@@ -3,7 +3,7 @@ NFA (Nondeterministic Finite Automaton) data structures.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Set, List, Optional
+from typing import Dict, Set
 
 # Epsilon transition marker
 EPSILON = -1
@@ -65,12 +65,3 @@ class NFA:
                     stack.append(target)
 
         return closure
-    
-    def move(self, states: Set[int], char: int) -> Set[int]:
-        """Get all states reachable from states on character."""
-        result: Set[int] = set()
-        for state in states:
-            if state in self.states:
-                targets = self.states[state].transitions.get(char, set())
-                result |= targets
-        return result

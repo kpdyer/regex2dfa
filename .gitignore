@@ -1,5 +1,11 @@
-# Build directory
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
 build/
+dist/
 
 # IDE
 .vscode/
@@ -7,12 +13,6 @@ build/
 *.swp
 *.swo
 *~
-
-# Compiled files
-*.o
-*.a
-*.so
-*.dylib
 
 # OS files
 .DS_Store

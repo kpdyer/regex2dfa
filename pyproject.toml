@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "regex2dfa"
-version = "0.3.0"
+dynamic = ["version"]
 description = "Convert regular expressions to minimized DFAs in AT&T FST format"
-readme = "README_PYPI.md"
+readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
@@ -33,6 +33,9 @@ dev = ["pytest>=7.0"]
 [project.urls]
 Homepage = "https://github.com/kpdyer/regex2dfa"
 Repository = "https://github.com/kpdyer/regex2dfa"
+
+[tool.hatch.version]
+path = "regex2dfa/__init__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["regex2dfa"]

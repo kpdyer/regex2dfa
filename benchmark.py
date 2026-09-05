@@ -19,7 +19,7 @@ import gc
 import json
 import sys
 import time
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List
 
 from regex2dfa import (
     regex2dfa,

@@ -2,36 +2,23 @@
 
 [![CI](https://github.com/kpdyer/regex2dfa/actions/workflows/ci.yml/badge.svg)](https://github.com/kpdyer/regex2dfa/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/regex2dfa.svg)](https://pypi.org/project/regex2dfa/)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Convert regular expressions to minimized DFAs in AT&T FST format.
+Convert regular expressions to minimized deterministic finite automata (DFAs) in
+AT&T FST text format. Pure Python, no runtime dependencies; requires Python 3.10+.
 
-## Installation
+## Install and use
 
-```bash
+```sh
 pip install regex2dfa
 ```
-
-Or install from source:
-
-```bash
-git clone https://github.com/kpdyer/regex2dfa.git
-cd regex2dfa
-pip install -e .
-```
-
-## Quick Start
 
 ```python
 from regex2dfa import regex2dfa
 
-dfa = regex2dfa("(a|b)+")
-print(dfa)
+print(regex2dfa("(a|b)+"))
 ```
 
-Output:
-```
+```text
 0	1	97	97
 0	1	98	98
 1	1	97	97
@@ -39,113 +26,72 @@ Output:
 1
 ```
 
-## Caching
+Transitions contain tab-separated `source destination input output` fields;
+final states appear on separate lines. State 0 is the start state. Input and
+output labels are identical integer character values (`97` is `a`). Byte-range
+characters use labels 0–255; other literal characters use their Unicode code
+points, without UTF-8 encoding. An empty pattern returns `"0"` (accepts only the
+empty string).
 
-Results are automatically cached in memory. Repeated calls with the same regex return instantly:
+## Regex syntax
 
-```python
-from regex2dfa import regex2dfa, cache_info, clear_cache
+| Syntax | Meaning |
+| --- | --- |
+| `abc`, `(ab)` | Literals, concatenation and grouping |
+| `a\|b` | Alternation |
+| `*`, `+`, `?` | Zero or more, one or more, zero or one |
+| `[abc]`, `[a-z]`, `[^abc]` | Character sets, ranges, negation |
+| `.`, `\C` | Any byte (0–255), including newline |
+| `\d`, `\w` | `[0-9]`, `[a-zA-Z0-9_]` |
+| `\s` | Space, tab, newline or carriage return |
+| `\n`, `\r`, `\t`, `\0`, `\xFF` | Control characters and hex byte values |
+| `\.`, `\*`, `\$`, etc. | Escaped literals |
 
-# First call computes the DFA
-regex2dfa("(a|b)+")
+DFAs describe whole strings. Unescaped `^` and `$` outside character classes are
+ignored. Negated classes are limited to bytes 0–255. Use Python raw strings for
+regex escapes, for example `regex2dfa(r"\d+\.")`.
 
-# Second call returns from cache (instant)
-regex2dfa("(a|b)+")
+This is a small regex dialect: counted repetition (`{m,n}`), lookarounds,
+backreferences and lazy quantifiers are unsupported. Escapes are not expanded
+inside character classes; use `[0-9]` instead of `[\d]`.
 
-# Check cache statistics
-print(cache_info())
-# CacheInfo(hits=1, misses=1, maxsize=1024, currsize=1)
+## API
 
-# Clear cache if needed
-clear_cache()
-```
+`regex2dfa(pattern)` caches up to 1,024 results in memory. Use `cache_info()` for
+hit/miss statistics and `clear_cache()` to reset the cache.
 
-## Object-Oriented Interface
+`Regex2DFA` lazily exposes each conversion stage without using the shared cache:
 
 ```python
 from regex2dfa import Regex2DFA
 
 converter = Regex2DFA("(a|b)+")
-
-# Access intermediate representations
-print(f"NFA states: {len(converter.nfa.states)}")
-print(f"DFA states: {len(converter.dfa.states)}")
-print(f"Minimized DFA states: {len(converter.minimized_dfa.states)}")
-
-# Get AT&T format
-print(converter.to_att())
+print(len(converter.nfa.states), len(converter.minimized_dfa.states))
+print(converter.to_att())  # str(converter) also returns AT&T text
 ```
 
-## Low-Level API
+The stages are also available as functions:
 
-```python
-from regex2dfa import parse_regex, build_nfa, nfa_to_dfa, minimize_dfa, format_att
+| Function | Result | `Regex2DFA` property |
+| --- | --- | --- |
+| `parse_regex(pattern)` | Postfix tokens (shunting-yard parser) | `postfix` |
+| `build_nfa(postfix)` | NFA (Thompson's construction) | `nfa` |
+| `nfa_to_dfa(nfa)` | DFA (subset construction) | `dfa` |
+| `minimize_dfa(dfa)` | Minimal DFA (Hopcroft's algorithm) | `minimized_dfa` |
+| `format_att(dfa)` | AT&T text | — |
 
-# Step-by-step pipeline
-postfix = parse_regex("(a|b)+")
-nfa = build_nfa(postfix)
-dfa = nfa_to_dfa(nfa)
-min_dfa = minimize_dfa(dfa)
-output = format_att(min_dfa)
+## Development
+
+```sh
+git clone https://github.com/kpdyer/regex2dfa.git
+cd regex2dfa
+python -m pip install -e ".[dev]"
+python -m pytest
+python benchmark.py --quick
 ```
 
-## AT&T FST Format
+The benchmark supports `--stages` for stage timings and `--json` for machine-readable
+output. Package versions come from `regex2dfa/__init__.py`; this README is also
+the PyPI description.
 
-The output uses tab-separated fields:
-- **Transitions**: `src  dst  input  output`
-- **Final states**: `state_id`
-
-Labels are ASCII byte values (97 = 'a', 98 = 'b').
-
-## Supported Regex Syntax
-
-| Feature | Syntax | Description |
-|---------|--------|-------------|
-| Literal | `a` | Matches character |
-| Any char | `.` | Matches any byte (0-255) |
-| Char class | `[abc]` | Matches any listed char |
-| Negated class | `[^abc]` | Matches any char not listed |
-| Range | `[a-z]` | Matches range |
-| Zero or more | `*` | Kleene star |
-| One or more | `+` | Kleene plus |
-| Optional | `?` | Zero or one |
-| Alternation | `\|` | Either side |
-| Grouping | `(...)` | Group expressions |
-| Anchors | `^` `$` | Start/end (stripped, implicit) |
-| Hex escape | `\x00` | Byte by hex value |
-| Any byte | `\C` | Any byte (0-255) |
-| Digits | `\d` | `[0-9]` |
-| Word chars | `\w` | `[a-zA-Z0-9_]` |
-| Whitespace | `\s` | Space, tab, newline, carriage return |
-
-## How It Works
-
-1. **Parser** — Tokenizes regex and converts to postfix notation (shunting-yard algorithm)
-2. **Thompson's Construction** — Builds NFA from postfix tokens
-3. **Subset Construction** — Converts NFA to DFA (powerset method)
-4. **Hopcroft's Algorithm** — Minimizes DFA (partition refinement)
-
-## Project Structure
-
-```
-regex2dfa/
-├── __init__.py     # Public API
-├── core.py         # Main regex2dfa() function with caching
-├── parser.py       # Regex tokenizer + postfix conversion
-├── nfa.py          # NFA data structures
-├── thompson.py     # Thompson's construction (Regex → NFA)
-├── dfa.py          # DFA data structures
-├── subset.py       # Subset construction (NFA → DFA)
-├── hopcroft.py     # DFA minimization
-└── formatter.py    # AT&T FST output
-```
-
-## Tests
-
-```bash
-pytest tests/ -v
-```
-
-## License
-
-MIT
+Licensed under [MIT](https://github.com/kpdyer/regex2dfa/blob/master/LICENSE).
